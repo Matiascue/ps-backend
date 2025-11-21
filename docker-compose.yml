@@ -1,0 +1,99 @@
+services:
+  # Base de datos MySQL
+  mysql-db:
+    image: mysql:8.0
+    container_name: mysql-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: pocketuser
+      MYSQL_PASSWORD: pocketpass
+      MYSQL_DATABASE: pocketshop_users
+    ports:
+      - "3306:3306"
+    networks:
+      - pocket-network
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d
+
+  # Servicio de usuarios
+  user-service:
+    build:
+      context: ./users-service
+    container_name: user-service
+    ports:
+      - "8090:8090"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/pocketshop_users
+      SPRING_DATASOURCE_USERNAME: pocketuser
+      SPRING_DATASOURCE_PASSWORD: pocketpass
+    networks:
+      - pocket-network
+    depends_on:
+      - mysql-db
+  #Servicio de compra/venta
+  sales-buy:
+    build:
+      context: ./sales-buy-services
+    container_name: sales-buy
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/pocketshop_buys
+      SPRING_DATASOURCE_USERNAME: pocketuser
+      SPRING_DATASOURCE_PASSWORD: pocketpass
+    networks:
+      - pocket-network
+    depends_on:
+      - mysql-db
+  #Servicio de notificaciones
+  notification-services:
+    build:
+      context: ./notification-service
+    container_name: notification-services
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/pocketshop_notification
+      SPRING_DATASOURCE_USERNAME: pocketuser
+      SPRING_DATASOURCE_PASSWORD: pocketpass
+    networks:
+      - pocket-network
+    depends_on:
+      - mysql-db
+  # Servicio de cartas
+  cards-service:
+    build:
+      context: ./cards-service
+    container_name: cards-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/pocketshop_cards
+      SPRING_DATASOURCE_USERNAME: pocketuser
+      SPRING_DATASOURCE_PASSWORD: pocketpass
+    networks:
+      - pocket-network
+    depends_on:
+      - mysql-db
+  # Servicio de chats
+  chat-service:
+    build:
+      context: ./chat-service
+    container_name: chat-service
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/pocketshop_chat
+      SPRING_DATASOURCE_USERNAME: pocketuser
+      SPRING_DATASOURCE_PASSWORD: pocketpass
+    networks:
+      - pocket-network
+    depends_on:
+      - mysql-db
+
+networks:
+  pocket-network:
+
+volumes:
+  mysql-data:
